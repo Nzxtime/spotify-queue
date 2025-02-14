@@ -54,21 +54,24 @@ async function addTrackToPlaylist(trackUri) {
     });
 
     const result = await response.json();
+
     if (result.success) {
-      showToast('Track added to playlist successfully!');
+      showToast('Track added to playlist successfully!', 'success');
+    } else if (result.error === 'Track is already in the playlist') {
+      showToast('Track is already in the playlist!', 'error');
     } else {
-      showToast('Failed to add track to playlist.');
+      showToast('Failed to add track to playlist.', 'error');
     }
   } catch (error) {
     console.error('Error adding track to playlist:', error);
-    showToast('Failed to add track to playlist.');
+    showToast('Failed to add track to playlist.', 'error');
   }
 }
 
 // Function to show a toast message
-function showToast(message) {
+function showToast(message, type = 'success') {
   const toast = document.createElement('div');
-  toast.className = 'toast';
+  toast.className = `toast ${type}`;
   toast.textContent = message;
 
   document.body.appendChild(toast);

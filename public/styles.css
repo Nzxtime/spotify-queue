@@ -71,13 +71,20 @@ h1 {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #1db954; /* Spotify green */
-  color: #ffffff;
   padding: 10px 20px;
   border-radius: 5px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   animation: fadeInOut 3s ease-in-out;
+  color: #ffffff;
+}
+
+.toast.success {
+  background-color: #1db954; /* Spotify green */
+}
+
+.toast.error {
+  background-color: #e74c3c; /* Red for errors */
 }
 
 @keyframes fadeInOut {

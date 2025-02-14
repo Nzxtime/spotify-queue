@@ -15,7 +15,13 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const PLAYLIST_ID = process.env.PLAYLIST_ID;
 const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
-// Function to get a new access token using the refresh token
+// Cache for playlist tracks
+let playlistTracksCache = {
+  tracks: [],
+  expiresAt: 0, // Timestamp when the cache expires
+};
+
+// Function to get a new access token
 async function getAccessToken() {
   const authUrl = "https://accounts.spotify.com/api/token";
   const response = await axios.post(
@@ -36,30 +42,29 @@ async function getAccessToken() {
   return response.data.access_token;
 }
 
-// Search Spotify tracks
-app.get("/api/search", async (req, res) => {
-  const query = req.query.q;
-  if (!query) {
-    return res.status(400).json({ error: 'Query parameter "q" is required' });
-  }
+// Function to fetch all tracks in the playlist
+async function fetchAllPlaylistTracks(accessToken) {
+  let offset = 0;
+  const limit = 100; // Maximum tracks per request
+  let allTracks = [];
+  let totalTracks = 0;
 
-  try {
-    const accessToken = await getAccessToken();
-    const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-      query
-    )}&type=track&limit=10`;
-    const response = await axios.get(searchUrl, {
+  do {
+    const playlistUrl = `https://api.spotify.com/v1/playlists/${PLAYLIST_ID}/tracks?fields=items(track(uri)),total&limit=${limit}&offset=${offset}`;
+    const playlistResponse = await axios.get(playlistUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
 
-    res.json(response.data.tracks.items);
-  } catch (error) {
-    console.error("Error searching tracks:", error);
-    res.status(500).json({ error: "Failed to fetch tracks" });
-  }
-});
+    const { items, total } = playlistResponse.data;
+    allTracks = allTracks.concat(items);
+    totalTracks = total;
+    offset += limit;
+  } while (offset < totalTracks);
+
+  return allTracks;
+}
 
 // Add track to playlist
 app.post("/api/add-to-playlist", async (req, res) => {
@@ -70,6 +75,30 @@ app.post("/api/add-to-playlist", async (req, res) => {
 
   try {
     const accessToken = await getAccessToken();
+
+    // Check if the cache is expired
+    const now = Date.now();
+    if (now > playlistTracksCache.expiresAt) {
+      // Fetch all tracks and update the cache
+      const allTracks = await fetchAllPlaylistTracks(accessToken);
+      playlistTracksCache = {
+        tracks: allTracks,
+        expiresAt: now + 10 * 60 * 1000, // Cache expires in 10 minutes
+      };
+    }
+
+    // Check if the track already exists in the playlist
+    const isDuplicate = playlistTracksCache.tracks.some(
+      (item) => item.track.uri === trackUri
+    );
+
+    if (isDuplicate) {
+      return res
+        .status(400)
+        .json({ error: "Track is already in the playlist" });
+    }
+
+    // Add the track to the playlist
     const addTrackUrl = `https://api.spotify.com/v1/playlists/${PLAYLIST_ID}/tracks`;
     const response = await axios.post(
       addTrackUrl,
@@ -83,6 +112,9 @@ app.post("/api/add-to-playlist", async (req, res) => {
         },
       }
     );
+
+    // Add the new track to the cached list
+    playlistTracksCache.tracks.push({ track: { uri: trackUri } });
 
     res.json({ success: true, data: response.data });
   } catch (error) {
