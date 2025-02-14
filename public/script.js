@@ -1,6 +1,29 @@
 const searchInput = document.getElementById('searchInput');
 const resultsDiv = document.getElementById('results');
 
+// Function to load the playlist embed
+async function loadPlaylistEmbed() {
+  try {
+    const response = await fetch('/api/playlist-id');
+    const { playlistId } = await response.json();
+
+    // Update the iframe src with the playlist ID
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://open.spotify.com/embed/playlist/${playlistId}`;
+    iframe.width = '100%';
+    iframe.height = '380';
+    iframe.frameBorder = '0';
+    iframe.allowTransparency = 'true';
+    iframe.allow = 'encrypted-media';
+
+    // Add the iframe to the playlist embed container
+    const playlistEmbed = document.querySelector('.playlist-embed');
+    playlistEmbed.appendChild(iframe);
+  } catch (error) {
+    console.error('Error loading playlist embed:', error);
+  }
+}
+
 // Function to search for tracks
 async function searchTracks(query) {
   if (!query) {
@@ -91,3 +114,6 @@ function showToast(message, type = 'success') {
 searchInput.addEventListener('input', () => {
   searchTracks(searchInput.value);
 });
+
+// Load the playlist embed when the page loads
+loadPlaylistEmbed();

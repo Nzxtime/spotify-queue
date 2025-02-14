@@ -64,6 +64,11 @@ async function fetchAllPlaylistTracks(accessToken) {
   return allTracks;
 }
 
+// Serve the playlist ID
+app.get('/api/playlist-id', (req, res) => {
+  res.json({ playlistId: process.env.PLAYLIST_ID });
+});
+
 // Search Spotify tracks
 app.get('/api/search', async (req, res) => {
   const query = req.query.q;
