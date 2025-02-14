@@ -9,7 +9,7 @@ async function searchTracks(query) {
   }
 
   try {
-    const response = await fetch(`http://localhost:3001/api/search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
     const tracks = await response.json();
     displayResults(tracks);
   } catch (error) {
@@ -45,7 +45,7 @@ function displayResults(tracks) {
 // Function to add track to playlist
 async function addTrackToPlaylist(trackUri) {
   try {
-    const response = await fetch('http://localhost:3001/api/add-to-playlist', {
+    const response = await fetch('/api/add-to-playlist', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
