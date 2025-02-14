@@ -70,6 +70,11 @@ async function addTrackToPlaylist(trackUri) {
 
 // Function to show a toast message
 function showToast(message, type = 'success') {
+  // Remove any existing toast messages
+  const existingToasts = document.querySelectorAll('.toast');
+  existingToasts.forEach(toast => toast.remove());
+
+  // Create the new toast message
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.textContent = message;
